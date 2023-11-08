@@ -62,7 +62,6 @@ if __name__ == "__main__":
     # Add a new column with numerical representations
     df['numerical_label'] = df[label_column].map(label_dict)
     selected_columns = ['numerical_label','word_embeddings']
-    selected_df = df[selected_columns]
+    selected_df = df[selected_columns].astype('str')
+    selected_df = selected_df.loc[selected_df['word_embeddings']!='[]']
     selected_df.to_csv('selected_data.csv', index=False)
-
-

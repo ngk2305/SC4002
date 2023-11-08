@@ -65,6 +65,7 @@ for epoch in tqdm(range(EPOCHS), desc="Training Progress"):
 
     for batch_x, batch_y in train_loader:
         # forward pass
+        print(batch_x.size())
         outputs = model(batch_x).unsqueeze(0)
         outputs = outputs.type(torch.float)
         print(outputs)
