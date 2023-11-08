@@ -8,6 +8,7 @@ from data_helpers import EarlyStopper
 from tqdm import tqdm
 from torch import optim
 import numpy as np
+import torch.nn.functional as F
 from sklearn.metrics import f1_score, precision_score, accuracy_score, recall_score, confusion_matrix
 
 num_classes = 13  # Change to your number of classes
@@ -49,7 +50,7 @@ model = TextRCNN( num_classes, word_embedding_size, context_embedding_size, cell
                  loss_fn)
 optimizer= optim.Adam(model.parameters(), lr=0.001)
 
-EPOCHS = 100
+EPOCHS = 10
 torch.set_grad_enabled(True) 
 train_accuracy = []
 train_loss = []
@@ -66,23 +67,27 @@ for epoch in tqdm(range(EPOCHS), desc="Training Progress"):
     for batch_x, batch_y in train_loader:
         # forward pass
         # print(batch_x.size())
-        outputs = model(batch_x).unsqueeze(0)
-        outputs = outputs.type(torch.float)
-        # print(outputs)
+        optimizer.zero_grad()
+        logits,outputs = model(batch_x)
+        logits = logits.type(torch.float)
         # print(outputs.size())
 
-        batch_y= batch_y.type(torch.float)
-        # print(batch_y)
-        # print(batch_y.size())
 
-        loss = loss_fn(outputs, batch_y)
+        #print(batch_y)
+        one_hot_label = torch.nn.functional.one_hot(batch_y, num_classes=13)
+        one_hot_label = one_hot_label.view(-1)
+        one_hot_label = one_hot_label.type(torch.float)
+        #print(one_hot_label)
+        #print(batch_y.size())
+
+        loss = loss_fn(logits, one_hot_label)
+        #print(loss)
         loss = torch.autograd.Variable(loss, requires_grad=True)
         train_loss_in_epoch.append(loss)
 
-        acc = (outputs.round() == batch_y).float().mean()
+        acc = (outputs.round() == batch_y).float()
         train_accuracy_in_epoch.append(acc)
         # backward pass
-        optimizer.zero_grad()
         loss.backward()
 
         # update weights
@@ -98,17 +103,20 @@ for epoch in tqdm(range(EPOCHS), desc="Training Progress"):
     with torch.no_grad():
         for batch_x, batch_y in tqdm(
                 test_loader,
-                desc="Epoch {} Testing".format(epoch),
+                desc="Epoch {} Testing".format(epoch+1),
                 leave=False):
             # Calculating loss
-            predicted_labels = model(batch_x).unsqueeze(0)
-            predicted_labels = predicted_labels.type(torch.float)
-            batch_y= batch_y.type(torch.float)
+            dummy ,predicted_labels = model(batch_x)
+            dummy = dummy.type(torch.float)
 
-            loss = loss_fn(predicted_labels, batch_y)
+            one_hot_label = torch.nn.functional.one_hot(batch_y, num_classes=13)
+            one_hot_label = one_hot_label.view(-1)
+            one_hot_label = one_hot_label.type(torch.float)
+
+            loss = loss_fn(dummy, one_hot_label)
             eval_loss_in_epoch.append(loss)
 
-            accuracy = accuracy_score(predicted_labels, batch_y)
+            accuracy = acc = (predicted_labels.round() == batch_y).float().mean()
             eval_accuracy_in_epoch.append(accuracy)
 
     test_loss.append(torch.mean(torch.stack(eval_loss_in_epoch)).item())
