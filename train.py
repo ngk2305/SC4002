@@ -75,6 +75,7 @@ for epoch in tqdm(range(EPOCHS), desc="Training Progress"):
         print(batch_y.size())
 
         loss = loss_fn(outputs, batch_y)
+        loss = torch.autograd.Variable(loss, requires_grad=True)
         train_loss_in_epoch.append(loss)
 
         acc = (outputs.round() == batch_y).float().mean()
