@@ -8,7 +8,7 @@ from data_helpers import EarlyStopper
 from tqdm import tqdm
 from torch import optim
 import numpy as np
-from sklearn.metrics import f1_score, precision_score, recall_score, confusion_matrix
+from sklearn.metrics import f1_score, precision_score, accuracy_score, recall_score, confusion_matrix
 
 num_classes = 13  # Change to your number of classes
 word_embedding_size = 50  # Change to your desired embedding size
@@ -65,15 +65,15 @@ for epoch in tqdm(range(EPOCHS), desc="Training Progress"):
 
     for batch_x, batch_y in train_loader:
         # forward pass
-        print(batch_x.size())
+        # print(batch_x.size())
         outputs = model(batch_x).unsqueeze(0)
         outputs = outputs.type(torch.float)
-        print(outputs)
-        print(outputs.size())
+        # print(outputs)
+        # print(outputs.size())
 
         batch_y= batch_y.type(torch.float)
-        print(batch_y)
-        print(batch_y.size())
+        # print(batch_y)
+        # print(batch_y.size())
 
         loss = loss_fn(outputs, batch_y)
         loss = torch.autograd.Variable(loss, requires_grad=True)
@@ -101,12 +101,14 @@ for epoch in tqdm(range(EPOCHS), desc="Training Progress"):
                 desc="Epoch {} Testing".format(epoch),
                 leave=False):
             # Calculating loss
-            predicted_labels = model.forward(batch_x).squeeze()
+            predicted_labels = model(batch_x).unsqueeze(0)
+            predicted_labels = predicted_labels.type(torch.float)
+            batch_y= batch_y.type(torch.float)
 
             loss = loss_fn(predicted_labels, batch_y)
             eval_loss_in_epoch.append(loss)
 
-            accuracy = precision_score((predicted_labels > 0.5).float(), batch_y)
+            accuracy = accuracy_score(predicted_labels, batch_y)
             eval_accuracy_in_epoch.append(accuracy)
 
     test_loss.append(torch.mean(torch.stack(eval_loss_in_epoch)).item())
@@ -117,7 +119,7 @@ for epoch in tqdm(range(EPOCHS), desc="Training Progress"):
             torch.mean(torch.stack(eval_loss_in_epoch)).item()):
         print(f"Early Stop at Epoch {epoch + 1}!")
         break
-
-print(
+    print(
     f"Epoch {epoch + 1} | Train Loss {train_loss[-1]:.5f} | Train Acc {train_accuracy[-1]:.5f} | Test Loss {test_loss[-1]:.5f} | Test Acc {test_accuracy[-1]:.5f}"
 )
+

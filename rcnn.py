@@ -31,16 +31,15 @@ class TextRCNN(nn.Module):
         x = F.max_pool1d(x, kernel_size= x.size(2))
         x = x.permute(0, 2, 1)
         #print(x.size())
-
         logits = self.output(x)
         logits= logits.view(-1)
         if labels is not None:
             loss = self.loss_fn
             return loss
-        print(logits.size())
+        # print(logits.size())
         output = torch.argmax(logits, dim=-1)
 
-        print(output)
+        # print(output)
         return output
 
 
