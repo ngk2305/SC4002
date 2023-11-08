@@ -66,10 +66,10 @@ class TextRCNN(nn.Module):
         logits = self.Softmax_layer(logits)
         logits= logits.view(-1)
         # print(logits.size())
-        output = torch.argmax(logits, dim=-1)
+        #output = torch.argmax(logits, dim=-1)
 
         #print(output)
-        return logits,output
+        return logits
 
 
 

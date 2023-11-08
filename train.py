@@ -68,10 +68,10 @@ for epoch in tqdm(range(EPOCHS), desc="Training Progress"):
         # forward pass
         # print(batch_x.size())
         optimizer.zero_grad()
-        logits,outputs = model(batch_x)
+        logits  = model(batch_x)
         logits = logits.type(torch.float)
         # print(outputs.size())
-
+        outputs = torch.argmax(logits, dim=-1)
 
         #print(batch_y)
         one_hot_label = torch.nn.functional.one_hot(batch_y, num_classes=13)
@@ -106,8 +106,9 @@ for epoch in tqdm(range(EPOCHS), desc="Training Progress"):
                 desc="Epoch {} Testing".format(epoch+1),
                 leave=False):
             # Calculating loss
-            dummy ,predicted_labels = model(batch_x)
+            dummy = model(batch_x)
             dummy = dummy.type(torch.float)
+            predicted_labels= torch.argmax(dummy, dim=-1)
 
             one_hot_label = torch.nn.functional.one_hot(batch_y, num_classes=13)
             one_hot_label = one_hot_label.view(-1)
