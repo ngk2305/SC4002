@@ -15,27 +15,54 @@ class TextRCNN(nn.Module):
         self.bi_rnn = nn.RNN(input_size=word_embedding_size, hidden_size=context_embedding_size,
                              num_layers=1, bidirectional=True, batch_first=True)
         self.linear= nn.Linear(2*context_embedding_size,context_embedding_size)
-        self.output = nn.Linear(2*context_embedding_size+word_embedding_size, num_classes)
-
+        
+        self.ConvBlock1 = nn.Sequential(
+            nn.Conv1d(in_channels=1, out_channels=96, kernel_size=11, stride=4),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=3, stride=2))
+        
+        self.ConvBlock2 = nn.Sequential(
+            nn.Conv1d(in_channels=96, out_channels=256, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=3, stride=2),)
+        
+        self.ConvBlock3 = nn.Sequential(
+            nn.Conv1d(in_channels=256, out_channels=384, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Conv1d(in_channels=384, out_channels=384, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Conv1d(in_channels=384, out_channels=256, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+        )
+        
+        self.maxpool = nn.MaxPool1d(kernel_size=3, stride=2)
+        self.dropout = nn.Dropout(p=0.5)
+        
+        self.output = nn.Linear(256, num_classes)
     def forward(self, input_text, labels=None):
         rnn_out, _ = self.bi_rnn(input_text)
         rnn_out = self.linear(rnn_out)
         #print(rnn_out.size())
         c_left = torch.cat([torch.zeros_like(rnn_out[:, :1]), rnn_out[:, :-1]], dim=1)
         c_right = torch.cat([rnn_out[:, 1:], torch.zeros_like(rnn_out[:, :1])], dim=1)
-        #print(c_left.size())
-        #print(c_right.size())
         x = torch.cat([c_left, input_text, c_right], dim=2)
-        #print(x.size())
-        x=x.permute(0,2,1)
-        x = F.max_pool1d(x, kernel_size= x.size(2))
+        # print(x.size())
+        x=x.permute(0, 2, 1)
+        # print(x.size())
+        x = F.max_pool1d(x, kernel_size=x.size(2))
+        # print(x.size())
         x = x.permute(0, 2, 1)
-        #print(x.size())
+        x = self.ConvBlock1(x)
+        x = self.ConvBlock2(x)
+        x = self.ConvBlock3(x)
+        x = self.maxpool(x)
+        x = self.dropout(x)
+
+        x = x.permute(0, 2, 1)
+        # print(x.size())
+        
         logits = self.output(x)
         logits= logits.view(-1)
-        if labels is not None:
-            loss = self.loss_fn
-            return loss
         # print(logits.size())
         output = torch.argmax(logits, dim=-1)
 
