@@ -22,23 +22,24 @@ class TextRCNN(nn.Module):
             nn.MaxPool1d(kernel_size=3, stride=2))
         
         self.ConvBlock2 = nn.Sequential(
-            nn.Conv1d(in_channels=96, out_channels=256, kernel_size=5, stride=1, padding=2),
+            nn.Conv1d(in_channels=96, out_channels=2*context_embedding_size+word_embedding_size, kernel_size=5, stride=1, padding=2),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=3, stride=2),)
         
         self.ConvBlock3 = nn.Sequential(
-            nn.Conv1d(in_channels=256, out_channels=384, kernel_size=3, stride=1, padding=1),
+            nn.Conv1d(in_channels=2*context_embedding_size+word_embedding_size, out_channels=384, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Conv1d(in_channels=384, out_channels=384, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Conv1d(in_channels=384, out_channels=256, kernel_size=3, stride=1, padding=1),
+            nn.Conv1d(in_channels=384, out_channels=2*context_embedding_size+word_embedding_size, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
         )
         
-        self.maxpool = nn.MaxPool1d(kernel_size=3, stride=2)
+        self.maxpool = nn.MaxPool1d(kernel_size=8)
         self.dropout = nn.Dropout(p=0.5)
         
-        self.output = nn.Linear(256, num_classes)
+        self.output = nn.Linear(2*context_embedding_size+word_embedding_size, num_classes)
+
     def forward(self, input_text, labels=None):
         rnn_out, _ = self.bi_rnn(input_text)
         rnn_out = self.linear(rnn_out)
@@ -46,11 +47,11 @@ class TextRCNN(nn.Module):
         c_left = torch.cat([torch.zeros_like(rnn_out[:, :1]), rnn_out[:, :-1]], dim=1)
         c_right = torch.cat([rnn_out[:, 1:], torch.zeros_like(rnn_out[:, :1])], dim=1)
         x = torch.cat([c_left, input_text, c_right], dim=2)
-        # print(x.size())
+        print(x.size())
         x=x.permute(0, 2, 1)
-        # print(x.size())
+        print(x.size())
         x = F.max_pool1d(x, kernel_size=x.size(2))
-        # print(x.size())
+        print(x.size())
         x = x.permute(0, 2, 1)
         x = self.ConvBlock1(x)
         x = self.ConvBlock2(x)
@@ -59,7 +60,7 @@ class TextRCNN(nn.Module):
         x = self.dropout(x)
 
         x = x.permute(0, 2, 1)
-        # print(x.size())
+        print(x.size())
         
         logits = self.output(x)
         logits= logits.view(-1)
