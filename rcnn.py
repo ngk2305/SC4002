@@ -5,17 +5,17 @@ import torch.nn.functional as F
 
 class TextRCNN(nn.Module):
     def __init__(self, num_classes, word_embedding_size, context_embedding_size,
-                 cell_type,  loss_function, l2_reg_lambda=0.0,):
+                 hidden_size_linear):
         super(TextRCNN, self).__init__()
-        self.loss_fn = loss_function
-        self.dropout = nn.Dropout()
-
+        
         self.text_length = self._length  # No need to pass input_text here
 
-        self.bi_rnn = nn.RNN(input_size=word_embedding_size, hidden_size=context_embedding_size,
-                             num_layers=1, bidirectional=True, batch_first=True)
-        self.linear= nn.Linear(2*context_embedding_size,context_embedding_size)
-        
+        self.lstm = nn.LSTM(input_size=word_embedding_size, hidden_size=context_embedding_size,
+                             bidirectional=True, batch_first=True, dropout=0.5)
+        self.linear= nn.Linear(word_embedding_size + 2*context_embedding_size, hidden_size_linear)
+        self.tanh = nn.Tanh()
+        self.fc = nn.Linear(hidden_size_linear, num_classes)
+
         self.ConvBlock1 = nn.Sequential(
             nn.Conv1d(in_channels=1, out_channels=96, kernel_size=11, stride=4),
             nn.ReLU(),
@@ -33,42 +33,46 @@ class TextRCNN(nn.Module):
             nn.ReLU(),
             nn.Conv1d(in_channels=384, out_channels=2*context_embedding_size+word_embedding_size, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-        )
-        
-        self.maxpool = nn.MaxPool1d(kernel_size=8)
+        )        
         self.dropout = nn.Dropout(p=0.5)
         
         self.output = nn.Linear(2*context_embedding_size+word_embedding_size, num_classes)
-        self.Softmax_layer= nn.Softmax(dim=0)
-    def forward(self, x, labels=None):
-        rnn_out, _ = self.bi_rnn(x)
-        rnn_out = self.linear(rnn_out)
-        #print(rnn_out.size())
-        c_left = torch.cat([torch.zeros_like(rnn_out[:, :1]), rnn_out[:, :-1]], dim=1)
-        c_right = torch.cat([rnn_out[:, 1:], torch.zeros_like(rnn_out[:, :1])], dim=1)
-        x = torch.cat([c_left, x, c_right], dim=2)
-        #print(x.size())
-        x=x.permute(0, 2, 1)
-        #print(x.size())
-        x = F.max_pool1d(x, kernel_size=x.size(2))
-        #print(x.size())
+    def forward(self, x):
+        # [bs, seq_length, word_embedding_size]
+
+        lstm_out, _ = self.lstm(x)
+
+        # [bs, seq_length, 2*context_embedding_size]
+        x = torch.cat([lstm_out, x], 2)
+
+        # [bs, seq_length, word_embedding_size+2*context_embedding_size]
+        x = self.linear(x)
+        # [bs, seq_length, hidden_size_linear] 
+        x = self.tanh(x.permute(0, 2, 1))
+
+        # [bs, hidden_size_linear, seq_length]
+        x = F.max_pool1d(x, x.size(2)).squeeze(2)
+        # [bs, hidden_size_linear]
+        x = x.unsqueeze(-1)
+        # [bs, hidden_size_linear, 1]
         x = x.permute(0, 2, 1)
+        # [bs, 1, hidden_size_linear]
         x = self.ConvBlock1(x)
+        # [bs, conv1 out channel, new size]
+
         x = self.ConvBlock2(x)
+        # [bs, word_embedding_size+2*context_embedding_size, new size]
+
         x = self.ConvBlock3(x)
-        x = self.maxpool(x)
+        # [bs, word_embedding_size+2*context_embedding_size, new size]
+
+        x = F.max_pool1d(x, kernel_size=x.size(2)).squeeze(2)
+        # [bs, word_embedding_size+2*context_embedding_size]
+
         x = self.dropout(x)
-
-        x = x.permute(0, 2, 1)
-        #print(x.size())
         
-        x = torch.squeeze(self.output(x))
-        x= x.view(-1)
-        x = x.type(torch.float)
-        # print(logits.size())
-        #output = torch.argmax(logits, dim=-1)
-
-        #print(output)
+        x = self.output(x)
+        # [bs, num_classes]
         return x
 
 

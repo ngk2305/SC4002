@@ -3,6 +3,8 @@ import torch
 import ast
 import numpy as np
 from torch.utils.data import Dataset, DataLoader, random_split
+from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
+
 class MyDataset(Dataset):
     def __init__(self, data):
         self.data = data
@@ -34,3 +36,13 @@ class EarlyStopper:
             if self.counter >= self.patience:
                 return True
         return False
+    
+def metrics(dataloader, losses, correct, predictions, targets):
+    avg_loss = losses / len(dataloader)
+    accuracy = correct / len(dataloader.dataset) * 100
+    precision = precision_score(targets, predictions, average='macro')
+    recall = recall_score(targets, predictions, average='macro')
+    f1 = f1_score(targets, predictions, average='macro')
+    cm = confusion_matrix(targets, predictions)
+    
+    return avg_loss, accuracy, precision, recall, f1, cm
