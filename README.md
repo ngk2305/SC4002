@@ -24,7 +24,7 @@ gensim
 
 ## Dataset
 
- **AG NEWS Dataset** [[Download](https://drive.google.com/uc?export=download&id=0Bz8a_Dbh9QhbUDNpeUdjb0wxRms)] : This link is from TORCHTEXT.DATASETS.
+ **TREC Dataset** [[Download](https://www.kaggle.com/datasets/thedevastator/the-trec-question-classification-dataset-a-longi?resource=download)] 
 
 | DATASET | COUNTS  |
 | :-----: | :-----: |
