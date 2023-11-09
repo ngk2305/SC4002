@@ -40,13 +40,13 @@ class TextRCNN(nn.Module):
         
         self.output = nn.Linear(2*context_embedding_size+word_embedding_size, num_classes)
         self.Softmax_layer= nn.Softmax(dim=0)
-    def forward(self, input_text, labels=None):
-        rnn_out, _ = self.bi_rnn(input_text)
+    def forward(self, x, labels=None):
+        rnn_out, _ = self.bi_rnn(x)
         rnn_out = self.linear(rnn_out)
         #print(rnn_out.size())
         c_left = torch.cat([torch.zeros_like(rnn_out[:, :1]), rnn_out[:, :-1]], dim=1)
         c_right = torch.cat([rnn_out[:, 1:], torch.zeros_like(rnn_out[:, :1])], dim=1)
-        x = torch.cat([c_left, input_text, c_right], dim=2)
+        x = torch.cat([c_left, x, c_right], dim=2)
         #print(x.size())
         x=x.permute(0, 2, 1)
         #print(x.size())
@@ -62,14 +62,14 @@ class TextRCNN(nn.Module):
         x = x.permute(0, 2, 1)
         #print(x.size())
         
-        logits = torch.squeeze(self.output(x))
-        logits = self.Softmax_layer(logits)
-        logits= logits.view(-1)
+        x = torch.squeeze(self.output(x))
+        x= x.view(-1)
+        x = x.type(torch.float)
         # print(logits.size())
         #output = torch.argmax(logits, dim=-1)
 
         #print(output)
-        return logits
+        return x
 
 
 

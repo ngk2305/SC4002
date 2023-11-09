@@ -8,9 +8,11 @@ from data_helpers import EarlyStopper
 from tqdm import tqdm
 from torch import optim
 import numpy as np
+import os
+
 import torch.nn.functional as F
 from sklearn.metrics import f1_score, precision_score, accuracy_score, recall_score, confusion_matrix
-
+current_directory = os.getcwd()
 num_classes = 13  # Change to your number of classes
 word_embedding_size = 50  # Change to your desired embedding size
 context_embedding_size = 50  # Change to your desired context embedding size
@@ -48,10 +50,15 @@ test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 early_stopper = EarlyStopper(patience=3)
 model = TextRCNN( num_classes, word_embedding_size, context_embedding_size, cell_type,
                  loss_fn)
+try:
+    model.load_state_dict(torch.load("model.pth"))
+except:
+    pass
+
 optimizer= optim.Adam(model.parameters(), lr=0.001)
 
-EPOCHS = 10
-torch.set_grad_enabled(True) 
+EPOCHS = 100
+
 train_accuracy = []
 train_loss = []
 
@@ -59,7 +66,6 @@ test_accuracy = []
 test_loss = []
 
 for epoch in tqdm(range(EPOCHS), desc="Training Progress"):
-    model.train()
 
     train_loss_in_epoch = []
     train_accuracy_in_epoch = []
@@ -69,7 +75,7 @@ for epoch in tqdm(range(EPOCHS), desc="Training Progress"):
         # print(batch_x.size())
         optimizer.zero_grad()
         logits  = model(batch_x)
-        logits = logits.type(torch.float)
+
         # print(outputs.size())
         outputs = torch.argmax(logits, dim=-1)
 
@@ -85,7 +91,7 @@ for epoch in tqdm(range(EPOCHS), desc="Training Progress"):
         loss = torch.autograd.Variable(loss, requires_grad=True)
         train_loss_in_epoch.append(loss)
 
-        acc = (outputs.round() == batch_y).float()
+        acc = (outputs == batch_y).float()
         train_accuracy_in_epoch.append(acc)
         # backward pass
         loss.backward()
@@ -117,7 +123,7 @@ for epoch in tqdm(range(EPOCHS), desc="Training Progress"):
             loss = loss_fn(dummy, one_hot_label)
             eval_loss_in_epoch.append(loss)
 
-            accuracy = acc = (predicted_labels.round() == batch_y).float().mean()
+            accuracy = acc = (predicted_labels == batch_y).float()
             eval_accuracy_in_epoch.append(accuracy)
 
     test_loss.append(torch.mean(torch.stack(eval_loss_in_epoch)).item())
@@ -131,4 +137,5 @@ for epoch in tqdm(range(EPOCHS), desc="Training Progress"):
     print(
     f"Epoch {epoch + 1} | Train Loss {train_loss[-1]:.5f} | Train Acc {train_accuracy[-1]:.5f} | Test Loss {test_loss[-1]:.5f} | Test Acc {test_accuracy[-1]:.5f}"
 )
+torch.save(model.state_dict(), "model.pth")
 
