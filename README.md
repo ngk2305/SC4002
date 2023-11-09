@@ -17,6 +17,7 @@ PyTorch
 sklearn
 nltk
 pandas
+gensim
 ```
 
 
@@ -27,21 +28,23 @@ pandas
 
 | DATASET | COUNTS  |
 | :-----: | :-----: |
-|  TRAIN  | 110,000 |
-|  VALID  | 10,000  |
-|  TEST   |  7,600  |
+|  TRAIN  | 4000 |
+|  VALID  | 500  |
+|  TEST   |  500  |
 
 **Classes**
 
-Original classes are 1, 2, 3, 4 each, but changed them into 0, 1, 2, 3.
+Original classes were 0, 1, 2, 3, 4, and 5 each, but changed them into 0, 1, 2, 3, 4 by merging 2 and 5 into 2.
 
-* 0: World 
+* 0: Concept question
 
-* 1: Sports
+* 1: Object question
 
-* 2: Business
+* 2: Others
 
-* 3: Sci/Tech
+* 3: Who question
+
+* 4: Number question 
 
   
 
@@ -67,15 +70,16 @@ For test set,
 
 | Accuracy | Precision | Recall |   F1   |
 | :------: | :-------: | :----: | :----: |
-|   91.5   |  0.9154   | 0.9150 | 0.9149 |
+|  0.754   |  0.7741   | 0.7630 | 0.7630 |
 
 Confusion Matrix is like below,
 
 ```
-[1712   47   63   78]
-[  21 1852   18    9]
-[  53   18 1660  169]
-[  34   24  112 1730]
+[85  6  7  0  4]
+[41 55  5  2  5]
+[ 9  0 72  2  5]
+[ 7 17  4 82  2]
+[ 4  2  1  0 83]
 ```
 
 
