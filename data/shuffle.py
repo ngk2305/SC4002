@@ -1,10 +1,17 @@
-import random
+import pandas as pd
 
-file_path = 'train.csv'
+# Read the CSV file into a DataFrame
+file_path = 'train_vec.csv'
+df = pd.read_csv(file_path)
 
-with open(file_path, 'r') as file:
-    lines = file.readlines()
-    random.shuffle(lines)
+# Save the header separately
+header = df.iloc[0]
 
-with open(file_path, 'w') as file:
-    file.writelines(lines)
+# Shuffle the rows (excluding the header)
+df_shuffled = df.iloc[1:].sample(frac=1).reset_index(drop=True)
+
+# Concatenate the shuffled DataFrame with the header
+df_final = pd.concat([header.to_frame().T, df_shuffled], ignore_index=True)
+
+# Save the shuffled DataFrame to a new CSV file
+df_final.to_csv('train_vec.csv', index=False)

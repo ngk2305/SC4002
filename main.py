@@ -14,6 +14,7 @@ from utils import read_file
 import pandas as pd
 import ast
 
+
 logging.basicConfig(format='%(asctime)s -  %(message)s', datefmt='%m/%d/%Y %H:%M:%S', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -37,17 +38,19 @@ def main(args):
     if args.n_gpu > 1:
         model = torch.nn.DataParallel(model, dim=0)
 
+
     df = pd.read_csv(args.train_file_path)
     df['word_embeddings'] = df['word_embeddings'].apply(ast.literal_eval)
     df['word_embeddings'] = df['word_embeddings'].apply(torch.Tensor)
 
-
+    df_dev = pd.read_csv(args.dev_file_path)
+    df_dev['word_embeddings'] = df_dev['word_embeddings'].apply(ast.literal_eval)
+    df_dev['word_embeddings'] = df_dev['word_embeddings'].apply(torch.Tensor)
 
     logger.info('Dataset Prepared!')
 
-    full_dataset = CustomTextDataset(df)
-    num_train_data = len(full_dataset) - args.num_val_data
-    train_dataset, val_dataset = random_split(full_dataset, [num_train_data, args.num_val_data])
+    train_dataset = CustomTextDataset(df)
+    val_dataset= CustomTextDataset(df_dev)
     train_dataloader = DataLoader(dataset=train_dataset)
 
     valid_dataloader = DataLoader(dataset=val_dataset)
@@ -78,11 +81,12 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', type=int, default=42)
-    parser.add_argument('--test_set', action='store_true', default=True)
+    parser.add_argument('--test_set', action='store_true', default=False)
 
     # data
-    parser.add_argument("--train_file_path", type=str, default="./data/train.csv")
-    parser.add_argument("--test_file_path", type=str, default="./data/test.csv")
+    parser.add_argument("--train_file_path", type=str, default="./data/train_vec.csv")
+    parser.add_argument("--dev_file_path", type=str, default="./data/dev_vec.csv")
+    parser.add_argument("--test_file_path", type=str, default="./data/test_vec.csv")
     parser.add_argument("--model_save_path", type=str, default="./model_saved")
     parser.add_argument("--num_val_data", type=int, default=1000)
     parser.add_argument("--max_len", type=int, default=64)
@@ -97,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument("--dropout", type=float, default=0.1)
 
     # training
-    parser.add_argument("--epochs", type=int, default=0)
+    parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--lr", type=float, default=3e-4)
     args = parser.parse_args()
 
