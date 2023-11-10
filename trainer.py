@@ -14,24 +14,31 @@ def train(model, optimizer, train_dataloader, valid_dataloader, args):
     logger.info('Start Training!')
     for epoch in range(1, args.epochs+1):
         model.train()
-
+        loss_in_epoch = 0
+        acc_in_epoch = 0
         for step, (x, y) in enumerate(train_dataloader):
             x, y = x.to(args.device), y.to(args.device)
 
             pred = model(x)
             loss = F.cross_entropy(pred, y)
+            acc = (torch.max(pred, 1)[1] == y).float()
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
+            loss_in_epoch += loss.item()
+            acc_in_epoch += acc
             if (step+1) % 200 == 0:
                 logger.info(f'|EPOCHS| {epoch:>}/{args.epochs} |STEP| {step+1:>4}/{len(train_dataloader)} |LOSS| {loss.item():>.4f}')
-
+        loss_in_epoch = loss_in_epoch / len(train_dataloader)
+        acc_in_epoch = acc_in_epoch / len(train_dataloader)
         avg_loss, accuracy, _, _, f1, _ = evaluate(model, valid_dataloader, args)
-        logger.info('-'*50)
+        logger.info('-' * 50)
         logger.info(f'|* VALID SET *| |VAL LOSS| {avg_loss:>.4f} |ACC| {accuracy:>.4f} |F1| {f1:>.4f}')
-        logger.info('-'*50)
+        logger.info('-' * 50)
+        logger.info(f'|* TRAIN SET *| |TRAIN LOSS| {loss_in_epoch} |ACC| {acc_in_epoch}')
+        logger.info('-' * 50)
 
         if f1 > best_f1:
             best_f1 = f1

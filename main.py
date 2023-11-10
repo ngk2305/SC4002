@@ -68,7 +68,7 @@ def main(args):
         test_dataloader = DataLoader(dataset=test_dataset)
 
         model.load_state_dict(torch.load(os.path.join(args.model_save_path, "best.pt")))
-        _, accuracy, precision, recall, f1, cm = evaluate(model, test_dataloader, args)
+        loss_test, accuracy, precision, recall, f1, cm = evaluate(model, test_dataloader, args)
         logger.info('-'*50)
         logger.info(f'|* TEST SET *| |ACC| {accuracy:>.4f} |PRECISION| {precision:>.4f} |RECALL| {recall:>.4f} |F1| {f1:>.4f}')
         logger.info('-'*50)
@@ -76,12 +76,12 @@ def main(args):
         for i in range(len(cm)):
             logger.info(cm[i])
         logger.info('--------------------------------------------------')
-
+        print(loss_test)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', type=int, default=42)
-    parser.add_argument('--test_set', action='store_true', default=False)
+    parser.add_argument('--test_set', action='store_true', default=True)
 
     # data
     parser.add_argument("--train_file_path", type=str, default="./data/train_vec.csv")
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument("--dropout", type=float, default=0.1)
 
     # training
-    parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--epochs", type=int, default=0)
     parser.add_argument("--lr", type=float, default=3e-4)
     args = parser.parse_args()
 
