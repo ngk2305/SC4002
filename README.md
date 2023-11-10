@@ -48,11 +48,11 @@ Original classes were 0, 1, 2, 3, 4, and 5 each, but changed them into 0, 1, 2, 
 
 ## Use custom dataset:
 
-# To use custom dataset, put them in data folder under format: 
+### To use custom dataset, put them in data folder under format: 
 - train.csv
 - dev.csv
 - test.csv
-# Then run Word2Vec.py to get the converted data
+### Then run Word2Vec.py to get the converted data
 
 ## Training
 
