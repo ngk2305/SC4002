@@ -28,7 +28,7 @@ gensim
 
 | DATASET | COUNTS  |
 | :-----: | :-----: |
-|  TRAIN  | 4000 |
+|  TRAIN  | 5000 |
 |  VALID  | 500  |
 |  TEST   |  500  |
 
@@ -46,7 +46,15 @@ Original classes were 0, 1, 2, 3, 4, and 5 each, but changed them into 0, 1, 2, 
 
 * 4: Number question 
 
-  
+## Use custom dataset:
+
+To use custom dataset, put them in data folder under format: 
+
+- train.csv
+- dev.csv
+- test.csv
+
+  Then run Word2Vec.py to get the converted data
 
 ## Training
 
@@ -66,20 +74,19 @@ python main.py --epochs 10 --test_set
 
 ## Result
 
-For test set,
 
-| Accuracy | Precision | Recall |   F1   |
-| :------: | :-------: | :----: | :----: |
-|  0.754   |  0.7741   | 0.7630 | 0.7630 |
+For the test set,
 
-Confusion Matrix is like below,
+|* TEST SET *| |ACC| 90.6000 |PRECISION| 0.9063 |RECALL| 0.9026 |F1| 0.9017
+
+The confusion Matrix is like below,
 
 ```
-[85  6  7  0  4]
-[41 55  5  2  5]
-[ 9  0 72  2  5]
-[ 7 17  4 82  2]
-[ 4  2  1  0 83]
+[134   2   2   0   0]
+[12 68  6  6  2]
+[ 2  4 82  1  1]
+[ 0  2  0 63  0]
+[  5   0   1   1 106]
 ```
 
 
