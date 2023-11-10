@@ -81,7 +81,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', type=int, default=42)
-    parser.add_argument('--test_set', action='store_true', default=True)
+    parser.add_argument('--test_set', action='store_true', default=False)
 
     # data
     parser.add_argument("--train_file_path", type=str, default="./data/train_vec.csv")
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument("--dropout", type=float, default=0.1)
 
     # training
-    parser.add_argument("--epochs", type=int, default=0)
+    parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--lr", type=float, default=3e-4)
     args = parser.parse_args()
 
