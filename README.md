@@ -52,7 +52,7 @@ To use custom dataset, put them in data folder under format:
 - train.csv
 - dev.csv
 - test.csv
-  Then run Word2Vec.py to get the converted data
+Then run Word2Vec.py to get the converted data
 
 ## Training
 
